@@ -17,6 +17,13 @@ var items = [];
 
 const url = 'http://seismes.cleverapps.io/api/2017-09-08/2017-09-09/0';
 
+const normalPDF = (x, mu, sigma) => {
+	const sigma2 = Math.pow(sigma, 2);
+	const numerator = Math.exp(-Math.pow(x - mu, 2) / (2 * sigma2));
+	const denominator = Math.sqrt(2 * Math.PI * sigma2);
+	return numerator / denominator;
+};
+
 const drawline = y => {
     ctx.beginPath();
     for (let i = 0; i < W; i++) {
@@ -26,6 +33,21 @@ const drawline = y => {
         ctx.lineTo(i, y - amplitude);
     }
     ctx.stroke();
+};
+
+const drawline = (y) => {
+	let x = 0;
+	ctx.beginPath();
+	for (let i = 0; i < i__width; i++) {
+		x += dx;
+        let newY = 0;
+        for (let v = 0; v < items.length; v++) {
+			const delta = Math.abs(y - items[v][1]);
+            newY += y - (1000 * normalPDF(x, items[v][0], 15 + delta))*items[v][2];
+        }
+		ctx.lineTo(x, newY/items.length);
+	}
+	ctx.stroke();
 };
 
 const draw_stroke = (ctx, x, y) => {
@@ -103,7 +125,7 @@ fetch(url)
     console.log(data['features'].length+' Séisme(s)');
     for(var i= 0; i < data['features'].length; i++)
     {
-         let pointX = data['features'][i]['geometry']['coordinates'][0];
+         let pointX = data['features'][i]['geometry']['coordinates'][0]/i__total_latitude;
          let pointY = data['features'][i]['geometry']['coordinates'][1];
          let magnitude = data['features'][i]['properties']['mag'];
          items.push([pointX, pointY, magnitude]);
@@ -115,5 +137,6 @@ fetch(url)
         draw_stroke(ctx, x, y);
     }
     console.log('ended !');
+    console.log(items);
 })
 .catch(err => { throw err });
